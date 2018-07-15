@@ -1,41 +1,75 @@
-import glfw
+from OpenGL.GLUT import *
+from OpenGL.GLU import *
 from OpenGL.GL import *
-import OpenGL.GL.shaders
-import sys
+from OpenGL.GL import shaders
 import numpy as np
 
 
-def main():
-	
-	if not glfw.init():
-		return "I can't init GLFW, sorry"
-	glfw.window_hint(glfw.SAMPLES, 4)
-	glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
-	glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
-	glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-	window = glfw.create_window(800,600,"Tetris",None,None)
-	if not window:
-		glfw.terminate()
-	
-	glfw.make_context_current(window)
-	VertexArrayID = GLuint()
-	glGenVertexArrays(1, VertexArrayID)
-	glBindVertexArray(VertexArrayID)
-	triangle = np.array([-1.0,-1.0,0.0,1.0,-1.0,0.0,0.0,1.0,0.0])
-	vertexBuffer = GLuint()
-	glGenBuffers(1, vertexBuffer)
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer)
-	glBufferData(GL_ARRAY_BUFFER, sys.getsizeof(triangle), triangle, GL_STATIC_DRAW)
-	while not glfw.window_should_close(window):
-		glEnableVertexAttribArray(0)
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer)
-		glVertexAttribPointer( 0,3,GL_FLOAT,GL_FALSE,0,0)
-		glDrawArrays(GL_TRIANGLES,0,3)
-		glDisableVertexAttribArray(0)
-		glClear(GL_COLOR_BUFFER_BIT)
-		glfw.swap_buffers(window)
-		glfw.poll_events()
-	glfw.terminate()
+VERTEX_SHADER = """
+#version 330
 
+in vec4 position;
+
+void main(){
+
+gl_Position = position;
+}
+"""
+
+FRAGMENT_SHADER = """
+#version 330
+
+void main(){
+
+gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+}
+
+"""
+
+shaderProgram = None
+
+def Initialize():
+	global VERTEX_SHADER
+	global FRAGMENT_SHADER
+	global shaderProgram
+	
+	vertexshader = shaders.compileShader(VERTEX_SHADER, GL_VERTEX_SHADER)
+	fragmentshader = shaders.compileShader(FRAGMENT_SHADER, GL_FRAGMENT_SHADER)
+	shaderProgram = shaders.compileShader(vertexshader, fragmentshader)
+	
+	triangles = [-0.5,-0.5,0.0,
+	             0.5,-0.5,0.0,
+	             0.0,0.5,0.0]
+	triangles = np.array(triangles, dtype = np.float32)
+	VBO = glGenBuffers(1)
+	glBindBuffer(GL_ARRAY_BUFFER, VBO)
+	glBufferData(GL_ARRAY_BUFFER, triangles.nbytes, triangles, GL_STATIC_DRAW)
+	
+	position = glGetAttribLocation(shaderProgram, "position")
+	glVertexAttribPointer(position, 3,GL_FLOAT, GL_FALSE, 0,None)
+	glEnableVertexAttribArray(position)
+
+
+def render():
+	glClearColor(0,0,0,1)
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+	
+	glUseProgram(shaderProgram)
+	glDrawArrays(GL_TRIANGLES,0,3)
+	glUseProgram(0)
+	
+	glutSwapBuffers()
+	
+def main():
+	glutInit()
+	glutInitWindowSize(800,600)
+	glutInitWindowPosition(200,200)
+	glutCreateWindow("Tetris")
+	Initialize()
+	glutDisplayFunc(render())
+	glutMainLoop()
+	
+	
 if __name__ == "__main__":
 	main()
+	
