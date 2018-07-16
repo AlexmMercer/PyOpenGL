@@ -62,6 +62,7 @@ def render():
 	
 def main():
 	glutInit()
+	glutInitContextVersion(3,3)
 	glutInitWindowSize(800,600)
 	glutInitWindowPosition(200,200)
 	glutCreateWindow("Tetris")
@@ -72,4 +73,3 @@ def main():
 	
 if __name__ == "__main__":
 	main()
-	
